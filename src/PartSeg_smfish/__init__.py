@@ -12,7 +12,7 @@ def register():
     from PartSegCore.register import RegisterEnum
     from PartSegCore.register import register as register_fun
 
-    from partseg_smfish import measurement, segmentation
+    from PartSeg_smfish import measurement, segmentation
 
     register_fun(
         segmentation.SMSegmentationBase,

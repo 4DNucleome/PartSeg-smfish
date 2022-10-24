@@ -1,5 +1,4 @@
 import operator
-import typing
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Callable, List, Tuple, Union
@@ -8,10 +7,10 @@ import numpy as np
 import SimpleITK
 from napari.layers import Image, Labels
 from napari.types import LayerDataTuple
+from nme import update_argument
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
-    AlgorithmProperty,
-    Register,
+    AlgorithmSelection,
     ROIExtractionProfile,
 )
 from PartSegCore.channel_class import Channel
@@ -26,14 +25,20 @@ from PartSegCore.segmentation.algorithm_base import (
 from PartSegCore.segmentation.noise_filtering import (
     DimensionType,
     GaussNoiseFiltering,
-    noise_filtering_dict,
+    GaussNoiseFilteringParams,
+    NoiseFilterSelection,
 )
 from PartSegCore.segmentation.segmentation_algorithm import (
     CellFromNucleusFlow,
     StackAlgorithm,
 )
-from PartSegCore.segmentation.threshold import BaseThreshold, threshold_dict
+from PartSegCore.segmentation.threshold import (
+    BaseThreshold,
+    ThresholdSelection,
+)
+from PartSegCore.utils import BaseModel
 from PartSegImage import Image as PSImage
+from pydantic import Field
 
 
 class SpotDetect(AlgorithmDescribeBase, ABC):
@@ -43,15 +48,36 @@ class SpotDetect(AlgorithmDescribeBase, ABC):
         pass
 
 
+class GaussBackgroundEstimateParameters(BaseModel):
+    background_estimate_radius: float = Field(
+        5, description="Radius of background gauss filter", ge=0, le=20
+    )
+    foreground_estimate_radius: float = Field(
+        2.5, description="Radius of foreground gauss filter", ge=0, le=20
+    )
+    estimate_mask: bool = Field(
+        True, description="Estimate background outside mask"
+    )
+
+
 class GaussBackgroundEstimate(SpotDetect):
+    __argument_class__ = GaussBackgroundEstimateParameters
+
     @classmethod
-    def spot_estimate(cls, array, mask, spacing, parameters):
-        if not parameters["estimate_mask"]:
+    @update_argument("parameters")
+    def spot_estimate(
+        cls,
+        array,
+        mask,
+        spacing,
+        parameters: GaussBackgroundEstimateParameters,
+    ):
+        if not parameters.estimate_mask:
             return _gauss_background_estimate(
                 array,
                 spacing,
-                parameters["background_estimate_radius"],
-                parameters["foreground_estimate_radius"],
+                parameters.background_estimate_radius,
+                parameters.foreground_estimate_radius,
             )
 
         mask = mask if mask is not None else array > 0
@@ -59,74 +85,97 @@ class GaussBackgroundEstimate(SpotDetect):
             array,
             mask,
             spacing,
-            parameters["background_estimate_radius"],
-            parameters["foreground_estimate_radius"],
+            parameters.background_estimate_radius,
+            parameters.foreground_estimate_radius,
         )
 
     @classmethod
     def get_name(cls) -> str:
         return "Gaussian spot estimate"
 
-    @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-        return [
-            AlgorithmProperty(
-                "background_estimate_radius",
-                "Background estimate radius",
-                5.0,
-                (0, 20),
-            ),
-            AlgorithmProperty(
-                "foreground_estimate_radius",
-                "Foreground estimate radius",
-                2.5,
-                (0, 20),
-            ),
-            AlgorithmProperty(
-                "estimate_mask",
-                "Estimate background outside mask",
-                True,
-            ),
-        ]
+
+class LaplacianBackgroundEstimateParameters(BaseModel):
+    laplacian_radius: float = Field(
+        1.30,
+        title="Laplacian radius",
+        description="Radius of laplacian filter",
+        ge=0,
+        le=20,
+    )
+    estimate_mask: bool = Field(
+        True, description="Estimate background outside mask"
+    )
 
 
 class LaplacianBackgroundEstimate(SpotDetect):
+
+    __argument_class__ = LaplacianBackgroundEstimateParameters
+
     @classmethod
-    def spot_estimate(cls, array, mask, spacing, parameters):
-        if not parameters["estimate_mask"]:
-            return _laplacian_estimate(array, parameters["laplacian_radius"])
+    @update_argument("parameters")
+    def spot_estimate(
+        cls,
+        array,
+        mask,
+        spacing,
+        parameters: LaplacianBackgroundEstimateParameters,
+    ):
+        if not parameters.estimate_mask:
+            return _laplacian_estimate(array, parameters.laplacian_radius)
         mask = mask if mask is not None else array > 0
         return _laplacian_estimate_mask(
-            array, mask, parameters["laplacian_radius"]
+            array, mask, parameters.laplacian_radius
         )
 
     @classmethod
     def get_name(cls) -> str:
         return "Laplacian spot estimate"
 
-    @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-        return [
-            AlgorithmProperty(
-                "laplacian_radius",
-                "Laplacian radius",
-                1.3,
-                (0, 20),
-            ),
-            AlgorithmProperty(
-                "estimate_mask",
-                "Estimate background outside mask",
-                True,
-            ),
-        ]
+
+class SpotExtractionSelection(
+    AlgorithmSelection,
+    class_methods=["spot_estimate"],
+    suggested_base_class=SpotDetect,
+):
+    pass
 
 
-spot_extraction_dict = Register(
-    GaussBackgroundEstimate, LaplacianBackgroundEstimate
-)
+SpotExtractionSelection.register(GaussBackgroundEstimate)
+SpotExtractionSelection.register(LaplacianBackgroundEstimate)
+
+
+class SMSegmentationBaseParameters(BaseModel):
+    channel_nuc: Channel = Field(0, title="Nucleus channel")
+    noise_filtering_nucleus: NoiseFilterSelection = Field(
+        NoiseFilterSelection.get_default(), title="Filter nucleus"
+    )
+    nucleus_threshold: ThresholdSelection = Field(
+        ThresholdSelection.get_default(), title="Nucleus threshold"
+    )
+    minimum_nucleus_size: int = Field(
+        500, title="Minimum nucleus size (px)", ge=0, le=10**6
+    )
+    leave_the_biggest: bool = Field(
+        True,
+        title="Biggest as nucleus",
+        description="Only biggest component is treated as nucleus",
+    )
+    spot_method = SpotExtractionSelection = Field(
+        SpotExtractionSelection.get_default(), title="Spot method"
+    )
+    channel_molecule: Channel = Field(1, title="Channel molecule")
+    molecule_threshold: ThresholdSelection = Field(
+        ThresholdSelection.get_default(), title="Molecule threshold"
+    )
+    minimum_molecule_size: int = Field(
+        5, title="Minimum molecule size (px)", ge=0, le=10**6
+    )
 
 
 class SMSegmentationBase(ROIExtractionAlgorithm):
+    __argument_class__ = SMSegmentationBaseParameters
+    new_parameters: SMSegmentationBaseParameters
+
     @classmethod
     def support_time(cls):
         return False
@@ -142,19 +191,19 @@ class SMSegmentationBase(ROIExtractionAlgorithm):
     def calculation_run(
         self, report_fun: Callable[[str, int], None]
     ) -> SegmentationResult:
-        channel_nuc = self.get_channel(self.new_parameters["channel_nuc"])
-        noise_filtering_parameters = self.new_parameters[
-            "noise_filtering_nucleus"
-        ]
-        cleaned_image = noise_filtering_dict[
-            noise_filtering_parameters["name"]
+        channel_nuc = self.get_channel(self.new_parameters.channel_nuc)
+        noise_filtering_parameters = (
+            self.new_parameters.noise_filtering_nucleus
+        )
+        cleaned_image = NoiseFilterSelection[
+            noise_filtering_parameters.name
         ].noise_filter(
             channel_nuc,
             self.image.spacing,
-            noise_filtering_parameters["values"],
+            noise_filtering_parameters.values,
         )
-        thr: BaseThreshold = threshold_dict[
-            self.new_parameters["nucleus_threshold"]["name"]
+        thr: BaseThreshold = ThresholdSelection[
+            self.new_parameters.nucleus_threshold.name
         ]
         nucleus_mask, nucleus_thr_val = thr.calculate_mask(
             cleaned_image,
@@ -167,25 +216,25 @@ class SMSegmentationBase(ROIExtractionAlgorithm):
         )
         nucleus_segmentation = SimpleITK.GetArrayFromImage(
             SimpleITK.RelabelComponent(
-                nucleus_connect, self.new_parameters["minimum_nucleus_size"]
+                nucleus_connect, self.new_parameters.minimum_nucleus_size
             )
         )
         nucleus_segmentation = convex_fill(nucleus_segmentation)
-        if self.new_parameters["leave_the_biggest"]:
+        if self.new_parameters.leave_the_biggest:
             nucleus_segmentation[nucleus_segmentation > 1] = 0
 
         channel_molecule = self.get_channel(
-            self.new_parameters["channel_molecule"]
+            self.new_parameters.channel_molecule
         )
-        background_estimate: SpotDetect = spot_extraction_dict[
-            self.new_parameters["spot_method"]["name"]
+        background_estimate: SpotDetect = SpotExtractionSelection[
+            self.new_parameters.spot_method.name
         ]
 
         estimated = background_estimate.spot_estimate(
             channel_molecule,
             self.mask,
             self.image.spacing,
-            self.new_parameters["spot_method"]["values"],
+            self.new_parameters.spot_method.values,
         )
 
         if self.mask is not None:
@@ -194,13 +243,13 @@ class SMSegmentationBase(ROIExtractionAlgorithm):
         else:
             estimated = estimated / np.std(estimated)
 
-        thr: BaseThreshold = threshold_dict[
-            self.new_parameters["molecule_threshold"]["name"]
+        thr: BaseThreshold = ThresholdSelection[
+            self.new_parameters.molecule_threshold.name
         ]
         molecule_mask, molecule_thr_val = thr.calculate_mask(
             estimated,
             self.mask,
-            self.new_parameters["molecule_threshold"]["values"],
+            self.new_parameters.molecule_threshold.values,
             operator.ge,
         )
         nucleus_connect = SimpleITK.ConnectedComponent(
@@ -209,7 +258,7 @@ class SMSegmentationBase(ROIExtractionAlgorithm):
 
         molecule_segmentation = SimpleITK.GetArrayFromImage(
             SimpleITK.RelabelComponent(
-                nucleus_connect, self.new_parameters["minimum_molecule_size"]
+                nucleus_connect, self.new_parameters.minimum_molecule_size
             )
         )
 
@@ -229,10 +278,11 @@ class SMSegmentationBase(ROIExtractionAlgorithm):
         mixed_components = cellular_components & nucleus_components
         cellular_components = cellular_components - mixed_components
         nucleus_components = nucleus_components - mixed_components
-        label_types = {}
-        label_types.update({i: "Nucleus" for i in nucleus_components})
-        label_types.update({i: "Cytoplasm" for i in cellular_components})
-        label_types.update({i: "Mixed" for i in mixed_components})
+        label_types = (
+            {i: "Nucleus" for i in nucleus_components}
+            | {i: "Cytoplasm" for i in cellular_components}
+            | {i: "Mixed" for i in mixed_components}
+        )
 
         annotation = {
             el: {"voxels": sizes[el], "type": label_types[el], "number": el}
@@ -282,62 +332,10 @@ class SMSegmentationBase(ROIExtractionAlgorithm):
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
         return ROIExtractionProfile(
-            "", self.get_name(), deepcopy(self.new_parameters)
+            name="",
+            algorithm=self.get_name(),
+            values=deepcopy(self.new_parameters),
         )
-
-    @classmethod
-    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-        return [
-            AlgorithmProperty(
-                "channel_nuc", "Nucleus Channel", 0, value_type=Channel
-            ),
-            AlgorithmProperty(
-                "noise_filtering_nucleus",
-                "Filter nucleus",
-                next(iter(noise_filtering_dict.keys())),
-                possible_values=noise_filtering_dict,
-                value_type=AlgorithmDescribeBase,
-            ),
-            AlgorithmProperty(
-                "nucleus_threshold",
-                "Nucleus Threshold",
-                next(iter(threshold_dict.keys())),
-                possible_values=threshold_dict,
-                value_type=AlgorithmDescribeBase,
-            ),
-            AlgorithmProperty(
-                "minimum_nucleus_size",
-                "Minimum nucleus size (px)",
-                500,
-                (0, 10**6),
-                1000,
-            ),
-            AlgorithmProperty("leave_the_biggest", "Biggest as nucleus", True),
-            AlgorithmProperty(
-                "spot_method",
-                "Spot method",
-                next(iter(spot_extraction_dict.keys())),
-                possible_values=spot_extraction_dict,
-                value_type=AlgorithmDescribeBase,
-            ),
-            AlgorithmProperty(
-                "channel_molecule", "Channel molecule", 1, value_type=Channel
-            ),
-            AlgorithmProperty(
-                "molecule_threshold",
-                "Molecule Threshold",
-                next(iter(threshold_dict.keys())),
-                possible_values=threshold_dict,
-                value_type=AlgorithmDescribeBase,
-            ),
-            AlgorithmProperty(
-                "minimum_molecule_size",
-                "Minimum molecule size (px)",
-                5,
-                (0, 10**6),
-                1000,
-            ),
-        ]
 
 
 def gauss_background_estimate(
@@ -405,18 +403,18 @@ def _gauss_background_estimate(
     background_estimate = GaussNoiseFiltering.noise_filter(
         channel,
         scale,
-        {
-            "dimension_type": DimensionType.Layer,
-            "radius": background_gauss_radius,
-        },
+        GaussNoiseFilteringParams(
+            dimension_type=DimensionType.Layer,
+            radius=background_gauss_radius,
+        ),
     )
     foreground_estimate = GaussNoiseFiltering.noise_filter(
         channel,
         scale,
-        {
-            "dimension_type": DimensionType.Layer,
-            "radius": foreground_gauss_radius,
-        },
+        GaussNoiseFilteringParams(
+            dimension_type=DimensionType.Layer,
+            radius=foreground_gauss_radius,
+        ),
     )
     return foreground_estimate - background_estimate
 
@@ -493,29 +491,33 @@ def laplacian_check(
     )
 
 
+class LayerRangeThresholdFlowParameters(
+    CellFromNucleusFlow.__argument_class__
+):
+    lower_layer: int = Field(
+        0, title="Lower layer", ge=-1, le=1000, position=0
+    )
+    upper_layer: int = Field(
+        -1, title="Lower layer", ge=-1, le=1000, position=1
+    )
+
+
 class LayerRangeThresholdFlow(StackAlgorithm):
+    __argument_class__ = LayerRangeThresholdFlowParameters
+
     def get_info_text(self):
         return ""
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
         return ROIExtractionProfile(
-            "", self.get_name(), deepcopy(self.new_parameters)
+            name="",
+            algorithm=self.get_name(),
+            values=deepcopy(self.new_parameters),
         )
 
     @classmethod
     def get_name(cls) -> str:
         return "Maximum projection Threshold Flow"
-
-    @classmethod
-    def get_fields(cls):
-        return [
-            AlgorithmProperty(
-                "lower_layer", "Lower Layer", 0, options_range=(-1, 1000)
-            ),
-            AlgorithmProperty(
-                "upper_layer", "Upper Layer", -1, options_range=(-1, 1000)
-            ),
-        ] + CellFromNucleusFlow.get_fields()
 
     @staticmethod
     def get_steps_num():
