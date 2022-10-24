@@ -4,25 +4,25 @@ contributions:
   commands:
     - id: PartSeg-smfish.verify_points.find_single_points
       title: Find single points
-      python_name: partseg_smfish.verify_points:find_single_points
+      python_name: PartSeg_smfish.verify_points:find_single_points
     - id: PartSeg-smfish.verify_points.verify_segmentation
       title: Verify segmentation
-      python_name: partseg_smfish.verify_points:verify_segmentation
+      python_name: PartSeg_smfish.verify_points:verify_segmentation
     - id: PartSeg-smfish.copy_labels.CopyLabelWidget
       title: Copy labels
-      python_name: partseg_smfish.copy_labels:CopyLabelWidget
+      python_name: PartSeg_smfish.copy_labels:CopyLabelWidget
     - id: PartSeg-smfish.segmentation.gauss_background_estimate
       title: Gauss background estimate
-      python_name: partseg_smfish.segmentation:gauss_background_estimate
+      python_name: PartSeg_smfish.segmentation:gauss_background_estimate
     - id: PartSeg-smfish.segmentation.laplacian_check
       title: Laplacian check
-      python_name: partseg_smfish.segmentation:laplacian_check
+      python_name: PartSeg_smfish.segmentation:laplacian_check
     - id: PartSeg-smfish.segmentation.laplacian_estimate
       title: Laplacian estimate
-      python_name: partseg_smfish.segmentation:laplacian_estimate
+      python_name: PartSeg_smfish.segmentation:laplacian_estimate
     - id: PartSeg-smfish.segmentation.maximum_projection
       title: Maximum projection
-      python_name: partseg_smfish.segmentation:maximum_projection
+      python_name: PartSeg_smfish.segmentation:maximum_projection
   widgets:
     - command: PartSeg-smfish.verify_points.verify_segmentation
       display_name: Verify points
