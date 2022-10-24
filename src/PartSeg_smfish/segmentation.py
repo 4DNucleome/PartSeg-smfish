@@ -160,9 +160,6 @@ class SMSegmentationBaseParameters(BaseModel):
         title="Biggest as nucleus",
         description="Only biggest component is treated as nucleus",
     )
-    spot_method = SpotExtractionSelection = Field(
-        SpotExtractionSelection.get_default(), title="Spot method"
-    )
     channel_molecule: Channel = Field(1, title="Channel molecule")
     molecule_threshold: ThresholdSelection = Field(
         ThresholdSelection.get_default(), title="Molecule threshold"
@@ -170,11 +167,18 @@ class SMSegmentationBaseParameters(BaseModel):
     minimum_molecule_size: int = Field(
         5, title="Minimum molecule size (px)", ge=0, le=10**6
     )
+    spot_method: SpotExtractionSelection = Field(
+        SpotExtractionSelection.get_default(), title="Spot method"
+    )
 
 
 class SMSegmentationBase(ROIExtractionAlgorithm):
     __argument_class__ = SMSegmentationBaseParameters
     new_parameters: SMSegmentationBaseParameters
+
+    def __init__(self):
+        super().__init__()
+        self._spots_count = {}
 
     @classmethod
     def support_time(cls):
@@ -283,6 +287,11 @@ class SMSegmentationBase(ROIExtractionAlgorithm):
             | {i: "Cytoplasm" for i in cellular_components}
             | {i: "Mixed" for i in mixed_components}
         )
+        self._spots_count = {
+            "Nucleus": len(nucleus_components),
+            "Cytoplasm": len(cellular_components),
+            "Mixed": len(mixed_components),
+        }
 
         annotation = {
             el: {"voxels": sizes[el], "type": label_types[el], "number": el}
@@ -328,7 +337,9 @@ class SMSegmentationBase(ROIExtractionAlgorithm):
         )
 
     def get_info_text(self):
-        return ""
+        return "SM-FISH dots found\n" + ", ".join(
+            f"{k}: {v}" for k, v in self._spots_count.items()
+        )
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
         return ROIExtractionProfile(
