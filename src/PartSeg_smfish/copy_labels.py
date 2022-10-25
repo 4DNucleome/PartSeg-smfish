@@ -57,10 +57,10 @@ class CopyLabelWidget(QWidget):
 
     def _shallow_update(self, event):
         label = event.source.selected_label
+        self.refresh()
         if label in self._components:
             return
         self._components.add(label)
-        self.refresh()
 
     def update_items(self, event):
         self._update_items(event.source)
@@ -90,7 +90,7 @@ class CopyLabelWidget(QWidget):
         if layer is None:
             return
 
-        leading_zeros = (0,) * (layer.dtype.ndim - 3)
+        leading_zeros = (0,) * (layer.data.ndim - 3)
         checked = set()
         for i in range(self.checkbox_layout.count()):
             w: QCheckBox = self.checkbox_layout.itemAt(i).widget()
