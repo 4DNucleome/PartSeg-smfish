@@ -20,6 +20,8 @@ class CopyLabelWidget(QWidget):
         self.viewer = napari_viewer
 
         self.copy_btn = QPushButton("Copy")
+        self.check_all_btn = QPushButton("Check all")
+        self.uncheck_all_btn = QPushButton("Uncheck all")
         self.lower = QSpinBox()
         self.lower.setSingleStep(1)
         self.upper = QSpinBox()
@@ -34,6 +36,8 @@ class CopyLabelWidget(QWidget):
         layout.addWidget(self.upper, 1, 1)
         layout.addLayout(self.checkbox_layout, 2, 0, 1, 2)
         layout.addWidget(self.copy_btn, 3, 0, 1, 2)
+        layout.addWidget(self.check_all_btn, 4, 0)
+        layout.addWidget(self.uncheck_all_btn, 4, 1)
         self.shortcut = QShortcut(QKeySequence("Ctrl+K"), self)
         self.shortcut.activated.connect(self.copy_action)
 
@@ -43,6 +47,8 @@ class CopyLabelWidget(QWidget):
             self.activate_widget
         )
         self.copy_btn.clicked.connect(self.copy_action)
+        self.check_all_btn.clicked.connect(self._check_all)
+        self.uncheck_all_btn.clicked.connect(self._uncheck_all)
         if isinstance(self.viewer.layers.selection.active, Labels):
             self._update_items(self.viewer.layers.selection.active)
 
@@ -71,6 +77,16 @@ class CopyLabelWidget(QWidget):
             unique = unique[1:]
         self._components = set(unique)
         self.refresh()
+
+    def _check_all(self):
+        for i in range(self.checkbox_layout.count()):
+            w: QCheckBox = self.checkbox_layout.itemAt(i).widget()
+            w.setChecked(True)
+
+    def _uncheck_all(self):
+        for i in range(self.checkbox_layout.count()):
+            w: QCheckBox = self.checkbox_layout.itemAt(i).widget()
+            w.setChecked(False)
 
     def refresh(self):
         checked = set()
