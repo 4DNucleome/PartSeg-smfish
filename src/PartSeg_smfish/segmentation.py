@@ -13,7 +13,7 @@ from PartSegCore.algorithm_describe_base import (
     AlgorithmSelection,
     ROIExtractionProfile,
 )
-from PartSegCore.channel_class import Channel
+from PartSegImage import Channel
 from PartSegCore.convex_fill import convex_fill
 from PartSegCore.image_operations import gaussian
 from PartSegCore.segmentation import ROIExtractionAlgorithm
