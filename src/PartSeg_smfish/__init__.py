@@ -25,6 +25,6 @@ def register():
     register_fun(measurement.ComponentType, RegisterEnum.analysis_measurement)
 
     if getattr(sys, "frozen", False):
-        import napari
+        from napari.plugins import plugin_manager
 
-        napari.plugins.plugin_manager.register(sys.modules[__name__])
+        plugin_manager.register(sys.modules[__name__])
