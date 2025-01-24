@@ -13,7 +13,6 @@ from PartSegCore.algorithm_describe_base import (
     AlgorithmSelection,
     ROIExtractionProfile,
 )
-from PartSegImage import Channel
 from PartSegCore.convex_fill import convex_fill
 from PartSegCore.image_operations import gaussian
 from PartSegCore.segmentation import ROIExtractionAlgorithm
@@ -37,6 +36,7 @@ from PartSegCore.segmentation.threshold import (
     ThresholdSelection,
 )
 from PartSegCore.utils import BaseModel
+from PartSegImage import Channel
 from PartSegImage import Image as PSImage
 from pydantic import Field
 

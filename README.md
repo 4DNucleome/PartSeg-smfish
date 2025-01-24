@@ -33,6 +33,20 @@ To install latest development version :
 
     pip install git+https://github.com/4DNucleome/PartSeg-smfish.git
 
+## Installation in bundled PartSeg
+
+It is possible to ues PartSeg-smfish in bundled PartSeg.
+To do this download PartSeg from PartSeg webpage https://partseg.github.io/#download_bundle
+or from github release page https://github.com/4DNucleome/PartSeg/releases.
+
+Then download `PartSeg-smfish` from this repository using link
+https://github.com/4DNucleome/PartSeg-smfish/archive/refs/heads/main.zip
+
+Unzip the downloaded file and copy `PartSeg_smfish` folder from `src` to `PartSeg`
+folder in the downloaded `PartSeg/_internal/plugins`.
+
+
+
 
 ## Contributing
 
