@@ -22,6 +22,10 @@ def register():
         segmentation.LayerRangeThresholdFlow,
         RegisterEnum.roi_mask_segmentation_algorithm,
     )
+    register_fun(
+        segmentation.ThresholdFlowAlgorithmWithDilation,
+        RegisterEnum.roi_mask_segmentation_algorithm,
+    )
     register_fun(measurement.ComponentType, RegisterEnum.analysis_measurement)
 
     if getattr(sys, "frozen", False):
