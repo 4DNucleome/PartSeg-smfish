@@ -26,6 +26,14 @@ def register():
         RegisterEnum.roi_mask_segmentation_algorithm,
     )
     register_fun(measurement.ComponentType, RegisterEnum.analysis_measurement)
+    register_fun(
+        measurement.DistanceToNucleusCenter,
+        RegisterEnum.analysis_measurement,
+    )
+    register_fun(
+        measurement.DistanceFromNucleusBorder,
+        RegisterEnum.analysis_measurement,
+    )
 
     if getattr(sys, "frozen", False):
         from napari.plugins import plugin_manager
