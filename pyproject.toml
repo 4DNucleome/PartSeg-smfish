@@ -1,7 +1,69 @@
 [build-system]
-requires = ["setuptools>=42.0.0", "wheel", "setuptools_scm"]
+requires = ["setuptools>=71.0.0", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "PartSeg-smfish"
+description = "PartSeg and napari plugin for smfish data"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.10"
+license = {text = "BSD-3-Clause", file = "LICENSE"}
+authors = [
+    {name = "Grzegorz Bokota", email = "g.bokota@cent.uw.edu.pl"}
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Framework :: napari",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+dependencies = [
+    "PartSeg>=0.16.0",
+    "numpy",
+    "napari",
+    "qtpy",
+]
+dynamic = ["version"]
+
+[project.urls]
+"Homepage" = "https://github.com/4DNucleome/PartSeg-smfish"
+"Bug Tracker" = "https://github.com/4DNucleome/PartSeg-smfish/issues"
+"Documentation" = "https://github.com/4DNucleome/PartSeg-smfish#README.md"
+"Source Code" = "https://github.com/4DNucleome/PartSeg-smfish"
+"User Support" = "https://github.com/4DNucleome/PartSeg-smfish/issues"
+
+[project.optional-dependencies]
+testing = [
+    "tox",
+    "pytest",
+    "pytest-cov",
+    "pytest-qt",
+]
+
+[project.entry-points."napari.manifest"]
+"PartSeg-smfish" = "PartSeg_smfish:napari.yaml"
+
+[project.entry-points."partsegcore.plugins"]
+"smFISH helpers" = "PartSeg_smfish"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml"]
 
 [tool.setuptools_scm]
 write_to = "src/PartSeg_smfish/_version.py"
