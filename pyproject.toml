@@ -7,12 +7,12 @@ name = "PartSeg-smfish"
 description = "PartSeg and napari plugin for smfish data"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
-license = {text = "BSD-3-Clause", file = "LICENSE"}
+license = {text = "BSD-3-Clause"}
 authors = [
     {name = "Grzegorz Bokota", email = "g.bokota@cent.uw.edu.pl"}
 ]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Framework :: napari",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: BSD License",
