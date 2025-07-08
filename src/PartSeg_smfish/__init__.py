@@ -9,8 +9,7 @@ __all__ = ()
 
 
 def register():
-    from PartSegCore.register import RegisterEnum
-    from PartSegCore.register import register as register_fun
+    from PartSegCore.register import RegisterEnum, register as register_fun
 
     from . import measurement, segmentation
 

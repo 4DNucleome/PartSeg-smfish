@@ -43,7 +43,9 @@ class CopyLabelWidget(QWidget):
 
         self.setLayout(layout)
 
-        self.viewer.layers.selection.events.active.connect(self.activate_widget)
+        self.viewer.layers.selection.events.active.connect(
+            self.activate_widget,
+        )
         self.copy_btn.clicked.connect(self.copy_action)
         self.check_all_btn.clicked.connect(self._check_all)
         self.uncheck_all_btn.clicked.connect(self._uncheck_all)
@@ -114,8 +116,21 @@ class CopyLabelWidget(QWidget):
             checked = {layer.selected_label}
         z_position = self.viewer.dims.current_step[layer.dtype.ndim - 3]
         for component_num in checked:
-            mask = layer.data[leading_zeros + (z_position,)] == component_num
+            mask = (
+                layer.data[
+                    (
+                        *leading_zeros,
+                        z_position,
+                    )
+                ]
+                == component_num
+            )
             start = max(0, self.lower.value())
             end = min(layer.data.shape[1] - 1, self.upper.value()) + 1
             for i in range(start, end):
-                layer.data[leading_zeros + (i,)][mask] = component_num
+                layer.data[
+                    (
+                        *leading_zeros,
+                        i,
+                    )
+                ][mask] = component_num

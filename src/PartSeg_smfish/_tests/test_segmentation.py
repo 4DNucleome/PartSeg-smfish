@@ -9,7 +9,7 @@ from PartSeg_smfish.segmentation import (
 )
 
 
-@pytest.mark.parametrize("mask", (True, False))
+@pytest.mark.parametrize("mask", [True, False])
 def test_gauss_estimate(mask):
     param = GaussBackgroundEstimateParameters(
         background_estimate_radius=5,
@@ -22,7 +22,7 @@ def test_gauss_estimate(mask):
     GaussBackgroundEstimate.spot_estimate(data, mask, (10, 10), param)
 
 
-@pytest.mark.parametrize("mask", (True, False))
+@pytest.mark.parametrize("mask", [True, False])
 def test_laplacian_estimate(mask):
     param = LaplacianBackgroundEstimateParameters(
         laplacian_radius=1.3,

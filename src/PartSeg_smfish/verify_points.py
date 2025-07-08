@@ -1,5 +1,4 @@
 from itertools import product
-from typing import List
 
 import numpy as np
 from magicgui import magic_factory
@@ -8,7 +7,7 @@ from napari.types import LayerDataTuple
 from scipy.spatial.distance import cdist
 
 
-def group_points(points: np.ndarray, max_dist=1) -> List[List[np.ndarray]]:
+def group_points(points: np.ndarray, max_dist=1) -> list[list[np.ndarray]]:
     points = np.copy(points)
     points[:, -3] = np.round(points[:, -3])
     sort = np.argsort(points[:, -3])
@@ -51,8 +50,11 @@ def _shift_array(points_to_roi: int, ndim: int) -> np.ndarray:
     base = tuple([0] * (ndim - 2))
     return np.array(
         [
-            base + (x, y)
-            for x, y in product(range(-points_to_roi, points_to_roi + 1), repeat=2)
+            (*base, x, y)
+            for x, y in product(
+                range(-points_to_roi, points_to_roi + 1),
+                repeat=2,
+            )
             if x**2 + y**2 <= points_to_roi**2
         ],
         dtype=np.uint16,
@@ -61,11 +63,13 @@ def _shift_array(points_to_roi: int, ndim: int) -> np.ndarray:
 
 class MatchResults:
     def __init__(self, points_grouped, labels):
-        self.points_grouped: List[List[np.ndarray]] = points_grouped
-        self.matched_points: List[bool] = [False for _ in self.points_grouped]
+        self.points_grouped: list[list[np.ndarray]] = points_grouped
+        self.matched_points: list[bool] = [False for _ in self.points_grouped]
         if 0 in labels:
             labels.remove(0)
-        self.labels_preserve: np.ndarray = np.arange((max(labels) if labels else 0) + 1)
+        self.labels_preserve: np.ndarray = np.arange(
+            (max(labels) if labels else 0) + 1,
+        )
         self.labels = labels
         self.ignored = 0
 
@@ -122,7 +126,7 @@ def verify_segmentation(
     points_to_roi: int = 1,
     ignore_single_points: bool = True,
     info: str = "",
-) -> List[LayerDataTuple]:
+) -> list[LayerDataTuple]:
     match_result = verify_sm_segmentation(
         segmentation.data,
         points.data,
@@ -136,13 +140,15 @@ def verify_segmentation(
         f"matched {np.sum(match_result.matched_points)} of"
         f" {len(match_result.matched_points)}"
         f"\nconsumed {all_labels - len(match_result.labels)} of"
-        f" {all_labels} segmentation components" + f"\nignored {match_result.ignored}"
+        f" {all_labels} segmentation components"
+        f"\nignored {match_result.ignored}"
         if ignore_single_points
         else ""
     )
     res = []
     for ok, points_group in zip(
-        match_result.matched_points, match_result.points_grouped
+        match_result.matched_points,
+        match_result.points_grouped,
     ):
         if not ok:
             res.extend(points_group)
@@ -188,5 +194,5 @@ def find_single_points(
                 "face_color": "green",
             },
             "points",
-        )
+        ),
     )
