@@ -43,9 +43,7 @@ class CopyLabelWidget(QWidget):
 
         self.setLayout(layout)
 
-        self.viewer.layers.selection.events.active.connect(
-            self.activate_widget
-        )
+        self.viewer.layers.selection.events.active.connect(self.activate_widget)
         self.copy_btn.clicked.connect(self.copy_action)
         self.check_all_btn.clicked.connect(self._check_all)
         self.uncheck_all_btn.clicked.connect(self._uncheck_all)

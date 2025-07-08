@@ -52,9 +52,7 @@ def _shift_array(points_to_roi: int, ndim: int) -> np.ndarray:
     return np.array(
         [
             base + (x, y)
-            for x, y in product(
-                range(-points_to_roi, points_to_roi + 1), repeat=2
-            )
+            for x, y in product(range(-points_to_roi, points_to_roi + 1), repeat=2)
             if x**2 + y**2 <= points_to_roi**2
         ],
         dtype=np.uint16,
@@ -67,9 +65,7 @@ class MatchResults:
         self.matched_points: List[bool] = [False for _ in self.points_grouped]
         if 0 in labels:
             labels.remove(0)
-        self.labels_preserve: np.ndarray = np.arange(
-            (max(labels) if labels else 0) + 1
-        )
+        self.labels_preserve: np.ndarray = np.arange((max(labels) if labels else 0) + 1)
         self.labels = labels
         self.ignored = 0
 
@@ -140,8 +136,7 @@ def verify_segmentation(
         f"matched {np.sum(match_result.matched_points)} of"
         f" {len(match_result.matched_points)}"
         f"\nconsumed {all_labels - len(match_result.labels)} of"
-        f" {all_labels} segmentation components"
-        + f"\nignored {match_result.ignored}"
+        f" {all_labels} segmentation components" + f"\nignored {match_result.ignored}"
         if ignore_single_points
         else ""
     )
@@ -181,7 +176,7 @@ def find_single_points(
     points_res = [x[0] for x in points_grouped if len(x) == 1]
     find_single_points.info.value = (
         f"Single points count: {len(points_res)} of {len(points_grouped)},"
-        f" ratio {len(points_res)/len(points_grouped)}"
+        f" ratio {len(points_res) / len(points_grouped)}"
     )
     points_res = np.array(points_res) if points_res else None
     return LayerDataTuple(

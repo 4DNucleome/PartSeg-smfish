@@ -57,9 +57,7 @@ class GaussBackgroundEstimateParameters(BaseModel):
     foreground_estimate_radius: float = Field(
         2.5, description="Radius of foreground gauss filter", ge=0, le=20
     )
-    estimate_mask: bool = Field(
-        True, description="Estimate background outside mask"
-    )
+    estimate_mask: bool = Field(True, description="Estimate background outside mask")
 
 
 class GaussBackgroundEstimate(SpotDetect):
@@ -104,13 +102,10 @@ class LaplacianBackgroundEstimateParameters(BaseModel):
         ge=0,
         le=20,
     )
-    estimate_mask: bool = Field(
-        True, description="Estimate background outside mask"
-    )
+    estimate_mask: bool = Field(True, description="Estimate background outside mask")
 
 
 class LaplacianBackgroundEstimate(SpotDetect):
-
     __argument_class__ = LaplacianBackgroundEstimateParameters
 
     @classmethod
@@ -125,9 +120,7 @@ class LaplacianBackgroundEstimate(SpotDetect):
         if not parameters.estimate_mask:
             return _laplacian_estimate(array, parameters.laplacian_radius)
         mask = mask if mask is not None else array > 0
-        return _laplacian_estimate_mask(
-            array, mask, parameters.laplacian_radius
-        )
+        return _laplacian_estimate_mask(array, mask, parameters.laplacian_radius)
 
     @classmethod
     def get_name(cls) -> str:
@@ -198,9 +191,7 @@ class SMSegmentationBase(ROIExtractionAlgorithm):
         self, report_fun: Callable[[str, int], None]
     ) -> SegmentationResult:
         channel_nuc = self.get_channel(self.new_parameters.channel_nuc)
-        noise_filtering_parameters = (
-            self.new_parameters.noise_filtering_nucleus
-        )
+        noise_filtering_parameters = self.new_parameters.noise_filtering_nucleus
         cleaned_image = NoiseFilterSelection[
             noise_filtering_parameters.name
         ].noise_filter(
@@ -229,9 +220,7 @@ class SMSegmentationBase(ROIExtractionAlgorithm):
         if self.new_parameters.leave_the_biggest:
             nucleus_segmentation[nucleus_segmentation > 1] = 0
 
-        channel_molecule = self.get_channel(
-            self.new_parameters.channel_molecule
-        )
+        channel_molecule = self.get_channel(self.new_parameters.channel_molecule)
         background_estimate: SpotDetect = SpotExtractionSelection[
             self.new_parameters.spot_method.name
         ]
@@ -359,11 +348,7 @@ def gauss_background_estimate(
     clip_bellow_0: bool = True,
 ) -> LayerDataTuple:
     # process the image
-    mask = (
-        mask.data
-        if mask is not None
-        else np.ones(image.data.shape, dtype=np.uint8)
-    )
+    mask = mask.data if mask is not None else np.ones(image.data.shape, dtype=np.uint8)
     resp = _gauss_background_estimate_mask(
         image.data[0],
         mask[0],
@@ -435,11 +420,7 @@ def _gauss_background_estimate(
 def laplacian_estimate(
     image: Image, mask: Labels, radius=1.30, clip_bellow_0=True
 ) -> LayerDataTuple:
-    mask = (
-        mask.data
-        if mask is not None
-        else np.ones(image.data.shape, dtype=np.uint8)
-    )
+    mask = mask.data if mask is not None else np.ones(image.data.shape, dtype=np.uint8)
     res = _laplacian_estimate_mask(image.data[0], mask[0], radius=radius)
     if clip_bellow_0:
         res[res < 0] = 0
@@ -480,9 +461,7 @@ def laplacian_check(
 ) -> LayerDataTuple:
     data = image.data[0]
     laplaced = -SimpleITK.GetArrayFromImage(
-        SimpleITK.LaplacianRecursiveGaussian(
-            SimpleITK.GetImageFromArray(data), radius
-        )
+        SimpleITK.LaplacianRecursiveGaussian(SimpleITK.GetImageFromArray(data), radius)
     )
 
     labeling = SimpleITK.GetArrayFromImage(
@@ -499,20 +478,12 @@ def laplacian_check(
         )
     )
     labeling = labeling.reshape((1,) + data.shape)
-    return LayerDataTuple(
-        (labeling, {"scale": image.scale, "name": "Signal estimate"})
-    )
+    return LayerDataTuple((labeling, {"scale": image.scale, "name": "Signal estimate"}))
 
 
-class LayerRangeThresholdFlowParameters(
-    CellFromNucleusFlow.__argument_class__
-):
-    lower_layer: int = Field(
-        0, title="Lower layer", ge=-1, le=1000, position=0
-    )
-    upper_layer: int = Field(
-        -1, title="Lower layer", ge=-1, le=1000, position=1
-    )
+class LayerRangeThresholdFlowParameters(CellFromNucleusFlow.__argument_class__):
+    lower_layer: int = Field(0, title="Lower layer", ge=-1, le=1000, position=0)
+    upper_layer: int = Field(-1, title="Lower layer", ge=-1, le=1000, position=1)
 
 
 class LayerRangeThresholdFlow(StackAlgorithm):
@@ -581,9 +552,7 @@ class LayerRangeThresholdFlow(StackAlgorithm):
         partial_res = segment_method.calculation_run(report_fun_wrap)
 
         report_fun("Copy layers", count[0] + 1)
-        res_roi = np.zeros(
-            self.image.get_channel(0).shape, dtype=partial_res.roi.dtype
-        )
+        res_roi = np.zeros(self.image.get_channel(0).shape, dtype=partial_res.roi.dtype)
         base_index = (slice(None),) * (self.image.stack_pos)
         for i in range(lower_layer, upper_layer):
             res_roi[base_index + (i,)] = partial_res.roi
@@ -630,9 +599,7 @@ def maximum_projection(
     )
 
 
-class ThresholdFlowAlgorithmParametersWithDilation(
-    ThresholdFlowAlgorithmParameters
-):
+class ThresholdFlowAlgorithmParametersWithDilation(ThresholdFlowAlgorithmParameters):
     dilation_radius: int = Field(
         0,
         title="Dilation radius",
