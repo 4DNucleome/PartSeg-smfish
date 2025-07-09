@@ -1,6 +1,6 @@
 import operator
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from copy import deepcopy
 
 import numpy as np
@@ -418,7 +418,7 @@ def gauss_background_estimate(
 def _gauss_background_estimate_mask(
     channel: np.ndarray,
     mask: np.ndarray,
-    scale: list[float] | tuple[float | int],
+    scale: Sequence[float],
     background_gauss_radius: float,
     foreground_gauss_radius: float,
 ) -> np.ndarray:
@@ -439,7 +439,7 @@ def _gauss_background_estimate_mask(
 
 def _gauss_background_estimate(
     channel: np.ndarray,
-    scale: list[float] | tuple[float | int],
+    scale: Sequence[float],
     background_gauss_radius: float,
     foreground_gauss_radius: float,
 ) -> np.ndarray:
