@@ -1,7 +1,7 @@
 import operator
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Sequence
 from copy import deepcopy
-from typing import Callable, Union
 
 import numpy as np
 import SimpleITK
@@ -230,10 +230,10 @@ class SMSegmentationBase(ROIExtractionAlgorithm):
         thr: BaseThreshold = ThresholdSelection[
             self.new_parameters.nucleus_threshold.name
         ]
-        nucleus_mask, nucleus_thr_val = thr.calculate_mask(
+        nucleus_mask, _nucleus_thr_val = thr.calculate_mask(
             cleaned_image,
             self.mask,
-            self.new_parameters["nucleus_threshold"]["values"],
+            self.new_parameters.nucleus_threshold.values,
             operator.ge,
         )
         nucleus_connect = SimpleITK.ConnectedComponent(
@@ -273,7 +273,7 @@ class SMSegmentationBase(ROIExtractionAlgorithm):
         thr: BaseThreshold = ThresholdSelection[
             self.new_parameters.molecule_threshold.name
         ]
-        molecule_mask, molecule_thr_val = thr.calculate_mask(
+        molecule_mask, _molecule_thr_val = thr.calculate_mask(
             estimated,
             self.mask,
             self.new_parameters.molecule_threshold.values,
@@ -418,7 +418,7 @@ def gauss_background_estimate(
 def _gauss_background_estimate_mask(
     channel: np.ndarray,
     mask: np.ndarray,
-    scale: Union[list[float], tuple[Union[float, int]]],
+    scale: Sequence[float],
     background_gauss_radius: float,
     foreground_gauss_radius: float,
 ) -> np.ndarray:
@@ -439,7 +439,7 @@ def _gauss_background_estimate_mask(
 
 def _gauss_background_estimate(
     channel: np.ndarray,
-    scale: Union[list[float], tuple[Union[float, int]]],
+    scale: Sequence[float],
     background_gauss_radius: float,
     foreground_gauss_radius: float,
 ) -> np.ndarray:
