@@ -14,7 +14,7 @@ from PartSegCore.algorithm_describe_base import (
     ROIExtractionProfile,
 )
 from PartSegCore.convex_fill import convex_fill
-from PartSegCore.image_operations import gaussian
+from PartSegCore.image_operations import gaussian, to_binary_image
 from PartSegCore.segmentation import ROIExtractionAlgorithm
 from PartSegCore.segmentation.algorithm_base import (
     AdditionalLayerDescription,
@@ -37,7 +37,14 @@ from PartSegCore.segmentation.threshold import (
     BaseThreshold,
     ThresholdSelection,
 )
+from PartSegCore.segmentation.watershed import (
+    calculate_distances_array,
+    get_neigh,
+)
 from PartSegCore.utils import BaseModel
+from PartSegCore_compiled_backend.sprawl_utils.find_split import (
+    euclidean_sprawl,
+)
 from PartSegImage import Channel, Image as PSImage
 from pydantic import Field
 
@@ -727,9 +734,19 @@ class ThresholdFlowAlgorithmWithDilation(ThresholdFlowAlgorithm):
         from PartSegCore.image_operations import dilate
 
         rad = self.new_parameters.dilation_radius
-        roi = dilate(res.roi, [rad, rad], True)
-
-        roi[res.roi > 0] = res.roi[res.roi > 0]
+        bin_roi = to_binary_image(res.roi)
+        sprawl_area = dilate(bin_roi, [rad, rad], True)
+        components_num = np.max(res.roi)
+        neigh, dist = calculate_distances_array(
+            self.image.spacing, get_neigh(True)
+        )
+        roi = euclidean_sprawl(
+            sprawl_area,
+            res.roi,
+            components_num,
+            neigh,
+            dist,
+        )
 
         res2 = ROIExtractionResult(
             roi=roi,
