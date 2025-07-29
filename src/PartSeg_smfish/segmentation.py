@@ -740,12 +740,14 @@ class ThresholdFlowAlgorithmWithDilation(ThresholdFlowAlgorithm):
         neigh, dist = calculate_distances_array(
             self.image.spacing, get_neigh(True)
         )
-        roi = euclidean_sprawl(
-            sprawl_area,
-            res.roi,
-            components_num,
-            neigh,
-            dist,
+        roi = self.image.fit_array_to_image(
+            euclidean_sprawl(
+                sprawl_area,
+                res.roi,
+                components_num,
+                neigh,
+                dist,
+            )
         )
 
         res2 = ROIExtractionResult(
