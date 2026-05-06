@@ -1,3 +1,5 @@
+from enum import Enum
+
 import numpy as np
 from PartSegCore import autofit as af
 from PartSegCore.analysis.measurement_base import (
@@ -7,15 +9,17 @@ from PartSegCore.analysis.measurement_base import (
     PerComponent,
 )
 from PartSegCore.analysis.measurement_calculation import get_border
+from PartSegCore.roi_info import BoundInfo
+from PartSegImage.image import Spacing
 from sympy import symbols
+from PartSegCore.utils import BaseModel
+from toolz.functoolz import return_none
 
 
 class ComponentType(MeasurementMethodBase):
     text_info = "Component type", "If roi is in nucleus or in cytoplasm"
 
-    @classmethod
-    def get_fields(cls):
-        return []
+    __argument_class__ = BaseModel
 
     @classmethod
     def get_starting_leaf(cls):
@@ -40,9 +44,7 @@ class DistanceToNucleusCenter(MeasurementMethodBase):
         "Distance to nucleus center in units",
     )
 
-    @classmethod
-    def get_fields(cls):
-        return []
+    __argument_class__ = BaseModel
 
     @classmethod
     def need_full_data(cls):
@@ -87,9 +89,7 @@ class DistanceFromNucleusBorder(MeasurementMethodBase):
         "Distance from nucleus border in units",
     )
 
-    @classmethod
-    def get_fields(cls):
-        return []
+    __argument_class__ = BaseModel
 
     @classmethod
     def need_full_data(cls):
@@ -140,3 +140,52 @@ class DistanceFromNucleusBorder(MeasurementMethodBase):
     @classmethod
     def get_units(cls, ndim):
         return symbols("{}")
+
+
+class DimensionName(Enum):
+    X = -1
+    Y = -2
+    Z = -3
+
+
+class CenterType(Enum):
+    Geometrical_center = 1
+    Mass_center = 2
+
+
+class CenterCoordinateParameters(BaseModel):
+    dimension: DimensionName = DimensionName.X
+    center_type: CenterType = CenterType.Geometrical_center
+
+
+class CenterCoordinate(MeasurementMethodBase):
+    text_info = "Center coordinate", "Center coordinate in units"
+
+    __argument_class__ = CenterCoordinateParameters
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("{}")
+
+    @staticmethod
+    def calculate_property(
+            area_array: np.ndarray,
+            channel: np.ndarray,
+            dimension: DimensionName,
+            center_type: CenterType,
+            bounds_info: BoundInfo,
+            voxel_size: Spacing,
+            _component_num: int,
+            result_scalar: float,
+            **kwargs):
+        shift = bounds_info[_component_num].lower * voxel_size * result_scalar
+        if center_type == CenterType.Mass_center:
+            im = np.copy(channel)
+            im[area_array == 0] = 0
+            area_pos = np.array([af.density_mass_center(im, voxel_size) * result_scalar])
+        else:
+            area_pos = np.array([af.density_mass_center(area_array > 0, voxel_size) * result_scalar])
+        print(area_pos, shift, voxel_size)
+        result_center = area_pos[0] + shift
+
+        return result_center[dimension.value]

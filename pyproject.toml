@@ -31,6 +31,7 @@ dependencies = [
     "numpy",
     "napari",
     "qtpy",
+    "sympy"
 ]
 dynamic = ["version"]
 
@@ -47,6 +48,9 @@ testing = [
     "pytest",
     "pytest-cov",
     "pytest-qt",
+]
+dev = [
+    "PyQt6"
 ]
 
 [project.entry-points."napari.manifest"]
