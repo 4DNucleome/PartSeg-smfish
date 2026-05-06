@@ -49,15 +49,18 @@ testing = [
     "pytest-cov",
     "pytest-qt",
 ]
-dev = [
-    "PyQt6"
-]
 
 [project.entry-points."napari.manifest"]
 "PartSeg-smfish" = "PartSeg_smfish:napari.yaml"
 
 [project.entry-points."partsegcore.plugins"]
 "smFISH helpers" = "PartSeg_smfish"
+
+[dependency-groups]
+dev = [
+    "PyQt6",
+    "PyOpenGL-accelerate"
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
