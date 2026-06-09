@@ -173,11 +173,13 @@ class CenterCoordinate(MeasurementMethodBase):
             channel: np.ndarray,
             dimension: DimensionName,
             center_type: CenterType,
-            bounds_info: BoundInfo,
+            bounds_info: dict[int, BoundInfo],
             voxel_size: Spacing,
             _component_num: int,
             result_scalar: float,
             **kwargs):
+        if abs(dimension.value) >= channel.ndim:
+            raise ValueError("Dimension is out of range")
         shift = bounds_info[_component_num].lower * voxel_size * result_scalar
         if center_type == CenterType.Mass_center:
             im = np.copy(channel)
@@ -185,7 +187,6 @@ class CenterCoordinate(MeasurementMethodBase):
             area_pos = np.array([af.density_mass_center(im, voxel_size) * result_scalar])
         else:
             area_pos = np.array([af.density_mass_center(area_array > 0, voxel_size) * result_scalar])
-        print(area_pos, shift, voxel_size)
         result_center = area_pos[0] + shift
 
         return result_center[dimension.value]
