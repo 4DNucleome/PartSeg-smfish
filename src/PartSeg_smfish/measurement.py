@@ -13,7 +13,6 @@ from PartSegCore.roi_info import BoundInfo
 from PartSegImage.image import Spacing
 from sympy import symbols
 from PartSegCore.utils import BaseModel
-from toolz.functoolz import return_none
 
 
 class ComponentType(MeasurementMethodBase):
@@ -160,8 +159,15 @@ class CenterCoordinateParameters(BaseModel):
 
 class CenterCoordinate(MeasurementMethodBase):
     text_info = "Center coordinate", "Center coordinate in units"
-
     __argument_class__ = CenterCoordinateParameters
+
+    @classmethod
+    def get_starting_leaf(cls):
+        return Leaf(
+            name=cls.text_info[0],
+            per_component=PerComponent.Yes,
+        )
+
 
     @classmethod
     def get_units(cls, ndim):
