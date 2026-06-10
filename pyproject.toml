@@ -31,7 +31,8 @@ dependencies = [
     "numpy",
     "napari",
     "qtpy",
-    "sympy"
+    "sympy",
+    "local-migrator"
 ]
 dynamic = ["version"]
 
