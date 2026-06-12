@@ -183,10 +183,14 @@ class CenterCoordinate(MeasurementMethodBase):
             voxel_size: Spacing,
             _component_num: int,
             result_scalar: float,
+            _area: AreaType,
             **kwargs):
-        if abs(dimension.value) >= channel.ndim:
+        if abs(dimension.value) > channel.ndim:
             raise ValueError("Dimension is out of range")
-        shift = bounds_info[_component_num].lower * voxel_size * result_scalar
+        if _area == AreaType.ROI:
+            shift = bounds_info[_component_num].lower * voxel_size * result_scalar
+        else:
+            shift = kwargs["mask_bound_info"][_component_num].lower * voxel_size * result_scalar
         if center_type == CenterType.Mass_center:
             im = np.copy(channel)
             im[area_array == 0] = 0
