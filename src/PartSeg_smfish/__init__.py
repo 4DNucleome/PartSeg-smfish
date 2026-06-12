@@ -34,6 +34,7 @@ def register():
         measurement.DistanceFromNucleusBorder,
         RegisterEnum.analysis_measurement,
     )
+    register_fun(measurement.CenterCoordinate, RegisterEnum.analysis_measurement)
 
     if getattr(sys, "frozen", False):
         from napari.plugins import plugin_manager

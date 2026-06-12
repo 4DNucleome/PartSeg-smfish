@@ -7,7 +7,7 @@ import numpy as np
 import SimpleITK
 from napari.layers import Image, Labels
 from napari.types import LayerDataTuple
-from nme import update_argument
+from local_migrator import update_argument
 from PartSegCore.algorithm_describe_base import (
     AlgorithmDescribeBase,
     AlgorithmSelection,

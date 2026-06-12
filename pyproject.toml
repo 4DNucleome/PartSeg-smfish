@@ -31,6 +31,8 @@ dependencies = [
     "numpy",
     "napari",
     "qtpy",
+    "sympy",
+    "local-migrator"
 ]
 dynamic = ["version"]
 
@@ -54,6 +56,12 @@ testing = [
 
 [project.entry-points."partsegcore.plugins"]
 "smFISH helpers" = "PartSeg_smfish"
+
+[dependency-groups]
+dev = [
+    "PyQt6",
+    "PyOpenGL-accelerate"
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
